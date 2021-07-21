@@ -11,23 +11,25 @@ import (
 
 // Modbus TCP constants
 const (
-	ipAddr   = "192.168.1.20:502"
+	ip1      = "192.168.1.19:502"
+	ip2      = "192.168.1.20:502"
 	modbusId = 1
+	timeout  = 10 * time.Second
 )
 
 // HT20 32-bit register addresses (contain floats in IEEE-754 standard. Order of bytes: B3 B2 B1 B0)
 const (
 	TemperatureAddr = 7500
 	HumidityAddr    = 7501
-	DewPointAddr    = 7502
+	DewpointAddr    = 7502
 )
 
 func main() {
 
-	// Handler
-	handler := modbus.NewTCPClientHandler(ipAddr)
-	handler.Timeout = 10 * time.Second
+	// ModbusTCP Handler and Client
+	handler := modbus.NewTCPClientHandler(ip2)
 	handler.SlaveId = modbusId
+	handler.Timeout = timeout
 
 	err := handler.Connect()
 	defer handler.Close()
@@ -35,30 +37,42 @@ func main() {
 		println("Error connecting handler:", err.Error())
 	}
 
-	// Client
 	client := modbus.NewClient(handler)
-	fmt.Println(client)
 
 	// Read Measurements
-	bsTemp, err := client.ReadInputRegisters(TemperatureAddr, 2)
+	bsTemp, err := client.ReadInputRegisters(TemperatureAddr, 1)
 	if err != nil {
 		fmt.Println("Error reading temperature", err.Error())
 	}
+	temperature := castValue(bsTemp)
 
-	var temperature float32
-	var reader = bytes.NewReader(bsTemp)
-
-	if readErr := binary.Read(reader, binary.BigEndian, &temperature); readErr != nil {
-		fmt.Println("Error reading binary data")
+	bsHum, err := client.ReadInputRegisters(HumidityAddr, 1)
+	if err != nil {
+		fmt.Println("Error reading temperature", err.Error())
 	}
+	humidity := castValue(bsHum)
 
-	temperature = float32(temperature)
+	bsDew, err := client.ReadInputRegisters(DewpointAddr, 1)
+	if err != nil {
+		fmt.Println("Error reading temperature", err.Error())
+	}
+	dewpoint := castValue(bsDew)
 
 	// Print
 	fmt.Println("HT20 readings:")
 	fmt.Println()
 	fmt.Printf("Temperature (ºC): \t %v \n", temperature)
-	fmt.Printf("Relative Humidity (%%): \t ????\n")
-	fmt.Printf("Dew Point (ºC): \t ????\n")
+	fmt.Printf("Relative Humidity (%%): \t %v \n", humidity)
+	fmt.Printf("Dew Point (ºC): \t %v \n", dewpoint)
 
+}
+
+func castValue(bs []byte) float32 {
+	var value float32
+	var reader = bytes.NewReader(bs)
+
+	if readError := binary.Read(reader, binary.BigEndian, &value); readError != nil {
+		fmt.Println("Error reading binary data")
+	}
+	return value
 }
