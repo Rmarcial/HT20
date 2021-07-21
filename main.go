@@ -48,13 +48,13 @@ func main() {
 
 	bsHum, err := client.ReadInputRegisters(HumidityAddr, 1)
 	if err != nil {
-		fmt.Println("Error reading temperature", err.Error())
+		fmt.Println("Error reading humidity", err.Error())
 	}
 	humidity := castValue(bsHum)
 
 	bsDew, err := client.ReadInputRegisters(DewpointAddr, 1)
 	if err != nil {
-		fmt.Println("Error reading temperature", err.Error())
+		fmt.Println("Error reading dew point", err.Error())
 	}
 	dewpoint := castValue(bsDew)
 
