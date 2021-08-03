@@ -2,11 +2,11 @@ FROM balenalib/raspberrypi3-alpine-golang:1.14.4-3.12-build AS build
 
 RUN mkdir -p /app
 
-WORKDIR  /app
+WORKDIR /app
 
 COPY . .
 
-RUN go build
+RUN go build main.go
 
-CMD ./app
+CMD ./main
 
